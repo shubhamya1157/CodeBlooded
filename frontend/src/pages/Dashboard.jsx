@@ -1,10 +1,10 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 
 export default function Dashboard() {
   return (
     <div className="flex-1 flex flex-col p-8 pt-12 relative z-10 w-full max-w-6xl mx-auto">
-      <motion.div 
+      <Motion.div 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
         className="flex items-center justify-between mb-8"
       >
@@ -12,11 +12,11 @@ export default function Dashboard() {
           <h1 className="text-4xl font-bold text-white tracking-tight">Mission Control</h1>
           <p className="text-muted-foreground mt-1 text-sm">Welcome back. Your campus events are synced and ready.</p>
         </div>
-      </motion.div>
+      </Motion.div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[1, 2, 3].map((i) => (
-          <motion.div 
+          <Motion.div 
             key={i}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -28,7 +28,7 @@ export default function Dashboard() {
             </div>
             <h3 className="text-xl font-semibold mb-2 text-white">Event Block {i}</h3>
             <p className="text-sm text-muted-foreground">Placeholder block for upcoming campus society activities. Awesome UI incoming.</p>
-          </motion.div>
+          </Motion.div>
         ))}
       </div>
     </div>

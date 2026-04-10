@@ -1,0 +1,6 @@
+
+> event-management-service@1.0.0 start
+> node src/index.js
+
+Event Service running on port 4102
+Events DB Connected

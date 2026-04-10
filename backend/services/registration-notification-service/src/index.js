@@ -17,7 +17,12 @@ mongoose.connect(process.env.MONGO_URI_REG || 'mongodb://localhost:27019/registr
   .then(() => console.log('Registration DB Connected'))
   .catch(err => console.error('DB Err:', err));
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'registration-notification-service' });
+});
+
 app.use('/', registrationRoutes);
+app.use('/registrations', registrationRoutes);
 
 const PORT = process.env.PORT || 3003;
 app.listen(PORT, () => {

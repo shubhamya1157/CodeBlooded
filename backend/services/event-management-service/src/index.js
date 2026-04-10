@@ -24,7 +24,12 @@ mongoose.connect(process.env.MONGO_URI_EVENTS || 'mongodb://localhost:27018/even
   .then(() => console.log('Events DB Connected'))
   .catch(err => console.error('DB Err:', err));
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'event-management-service' });
+});
+
 app.use('/', eventRoutes);
+app.use('/events', eventRoutes);
 
 io.on('connection', (socket) => {
   socket.on('subscribe:event', ({ eventId }) => {
@@ -35,7 +40,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.EVENT_SERVICE_PORT || process.env.PORT || 3002;
+const PORT = process.env.PORT || 3002;
 httpServer.listen(PORT, () => {
   console.log(`Event Service running on port ${PORT}`);
 });

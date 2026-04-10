@@ -20,8 +20,8 @@ const limiter = rateLimit({
 
 app.use(cors());
 app.use(morgan('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 const AUTH_SERVICE = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const EVENTS_SERVICE = process.env.EVENTS_SERVICE_URL || 'http://localhost:3002';
@@ -37,12 +37,14 @@ app.use('/api/auth', createProxyMiddleware({
   target: AUTH_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/api/auth': '/auth' },
+  timeout: 30000,
+  proxyTimeout: 30000,
   onError: (err, req, res) => {
-    console.error('Auth proxy error:', err);
+    console.error('Auth proxy error:', err.message);
     res.status(503).json({ error: 'Auth service unavailable', details: err.message });
   },
   onProxyRes: (proxyRes, req, res) => {
-    console.log(`Auth Response: ${proxyRes.statusCode}`);
+    console.log(`Auth Response: ${proxyRes.statusCode} ${req.method} ${req.url}`);
   }
 }));
 
@@ -50,8 +52,10 @@ app.use('/api/users', createProxyMiddleware({
   target: AUTH_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/api/users': '/users' },
+  timeout: 30000,
+  proxyTimeout: 30000,
   onError: (err, req, res) => {
-    console.error('Users proxy error:', err);
+    console.error('Users proxy error:', err.message);
     res.status(503).json({ error: 'Auth service unavailable' });
   }
 }));
@@ -60,8 +64,10 @@ app.use('/api/organizations', createProxyMiddleware({
   target: AUTH_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/api/organizations': '/organizations' },
+  timeout: 30000,
+  proxyTimeout: 30000,
   onError: (err, req, res) => {
-    console.error('Orgs proxy error:', err);
+    console.error('Orgs proxy error:', err.message);
     res.status(503).json({ error: 'Auth service unavailable' });
   }
 }));
@@ -70,8 +76,10 @@ app.use('/api/members', createProxyMiddleware({
   target: AUTH_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/api/members': '/members' },
+  timeout: 30000,
+  proxyTimeout: 30000,
   onError: (err, req, res) => {
-    console.error('Members proxy error:', err);
+    console.error('Members proxy error:', err.message);
     res.status(503).json({ error: 'Auth service unavailable' });
   }
 }));
@@ -81,8 +89,10 @@ app.use('/api/events', createProxyMiddleware({
   target: EVENTS_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/api/events': '' },
+  timeout: 30000,
+  proxyTimeout: 30000,
   onError: (err, req, res) => {
-    console.error('Events proxy error:', err);
+    console.error('Events proxy error:', err.message);
     res.status(503).json({ error: 'Events service unavailable' });
   }
 }));
@@ -92,8 +102,20 @@ app.use('/api/register', createProxyMiddleware({
   target: REGISTRATION_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/api/register': '' },
+  timeout: 30000,
+  proxyTimeout: 30000,
   onError: (err, req, res) => {
-    console.error('Registration proxy error:', err);
+    console.error('Registration proxy error:', err.message);
+    res.status(503).json({ error: 'Registration service unavailable' });
+  }
+}));
+
+app.use('/api/registrations', createProxyMiddleware({
+  target: REGISTRATION_SERVICE,
+  changeOrigin: true,
+  pathRewrite: { '^/api/registrations': '/registrations' },
+  onError: (err, req, res) => {
+    console.error('Registrations proxy error:', err);
     res.status(503).json({ error: 'Registration service unavailable' });
   }
 }));
