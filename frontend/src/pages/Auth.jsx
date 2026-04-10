@@ -18,11 +18,25 @@ export default function Auth() {
   const handleAuth = async (e) => {
     e.preventDefault();
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const payload = isLogin 
-        ? { email: e.target[0].value, password: e.target[1].value }
-        : { type: authType, name: e.target[3] ? e.target[3].value : 'Unknown', email: e.target[4]?.value || e.target[0].value, password: e.target[5]?.value || e.target[1].value, orgId: authType === 'member' ? e.target[6]?.value : undefined };
+      const formData = new FormData(e.target);
+      const email = formData.get('email');
+      const password = formData.get('password');
+      const name = formData.get('name');
+      const orgId = formData.get('orgId');
 
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      
+      const payload = isLogin 
+        ? { email, password }
+        : { 
+            type: authType, 
+            name: name || 'Unknown',
+            email, 
+            password, 
+            ...(authType === 'member' && { orgId })
+          };
+
+      console.log('Sending payload:', payload);
       const res = await fetch(`http://localhost:8080${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,6 +46,8 @@ export default function Auth() {
       const data = await res.json();
       if (res.ok) {
         // Connected to backend successfully
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
         navigate('/dashboard');
       } else {
         alert(data.error || 'Authentication Failed');
@@ -43,6 +59,7 @@ export default function Auth() {
   };
 
   return (
+    <>
     <div className="flex-1 flex items-center justify-center p-6 relative z-10">
       <motion.div 
         className="w-full max-w-md glass-card rounded-3xl p-8 overflow-hidden relative"
@@ -108,24 +125,24 @@ export default function Auth() {
               {(!isLogin || authType !== 'user') && (
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input placeholder="Full Name" required={!isLogin} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
+                  <input name="name" placeholder="Full Name" required={!isLogin} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
                 </div>
               )}
 
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input type="email" placeholder="Email address" required className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
+                <input name="email" type="email" placeholder="Email address" required className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
               </div>
 
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input type="password" placeholder="Password" required className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
+                <input name="password" type="password" placeholder="Password" required className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
               </div>
 
               {!isLogin && authType === 'member' && (
                 <div className="relative">
                   <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input placeholder="Organization Invite Code" required className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
+                  <input name="orgId" placeholder="Organization ID" required className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
                 </div>
               )}
 
@@ -143,5 +160,6 @@ export default function Auth() {
         </div>
       </motion.div>
     </div>
+    </>
   );
 }
