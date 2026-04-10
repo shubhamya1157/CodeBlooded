@@ -1,165 +1,161 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, User, Users, Lock, Mail, ArrowRight, Sparkles } from 'lucide-react';
-import { cn } from '../lib/utils';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { gsap } from 'gsap';
 
-const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
-  exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
-};
-
-export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [authType, setAuthType] = useState('user'); // user, organisation, member
+const Auth = () => {
+  const [currentRole, setCurrentRole] = useState('student');
   const navigate = useNavigate();
 
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData(e.target);
-      const email = formData.get('email');
-      const password = formData.get('password');
-      const name = formData.get('name');
-      const orgId = formData.get('orgId');
+  useEffect(() => {
+    createParticles();
+    entranceAnimation();
+    initRoleSelector();
+  }, []);
 
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      
-      const payload = isLogin 
-        ? { email, password }
-        : { 
-            type: authType, 
-            name: name || 'Unknown',
-            email, 
-            password, 
-            ...(authType === 'member' && { orgId })
-          };
+  const createParticles = () => {
+    const container = document.getElementById('particles-container');
+    if (!container) return;
 
-      console.log('Sending payload:', payload);
-      const res = await fetch(`http://localhost:8080${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+    for (let i = 0; i < 12; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      const size = Math.random() * 6 + 4;
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.top = `${Math.random() * 100}%`;
+      particle.style.opacity = '0.3';
+      container.appendChild(particle);
+      gsap.to(particle, {
+        x: `random(-80, 80)`,
+        y: `random(-80, 80)`,
+        duration: `random(10, 15)`,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut'
       });
-      
-      const data = await res.json();
-      if (res.ok) {
-        // Connected to backend successfully
-        localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
-        navigate('/dashboard');
-      } else {
-        alert(data.error || 'Authentication Failed');
-      }
-    } catch (err) {
-      console.error('Backend connection error:', err);
-      alert('Failed to connect to backend server. Is it running?');
     }
   };
 
+  const entranceAnimation = () => {
+    const tl = gsap.timeline();
+    tl.from('.logo-icon', { scale: 0.8, opacity: 0, duration: 0.7, ease: 'back.out(1.7)' })
+      .from('.logo-title', { y: 10, opacity: 0, duration: 0.5 }, '-=0.4')
+      .from('.role-selector', { y: 10, opacity: 0, duration: 0.4 }, '-=0.3')
+      .to('.form-group', { y: 0, opacity: 1, duration: 0.4, stagger: 0.1 }, '-=0.2')
+      .to('.signin-button', { y: 0, opacity: 1, duration: 0.4 }, '-=0.2')
+      .to('.forgot-password', { opacity: 1, duration: 0.4 }, '-=0.1')
+      .to('.service-status', { opacity: 1, bottom: 24, duration: 0.5 }, '-=0.3');
+  };
+
+  const initRoleSelector = () => {
+    const roleOptions = document.querySelectorAll('.role-option');
+    const roleSlider = document.getElementById('roleSlider');
+    if (roleSlider && roleOptions.length > 0) {
+      roleSlider.style.width = `${roleOptions[0].offsetWidth}px`;
+    }
+
+    roleOptions.forEach((option, index) => {
+      option.addEventListener('click', () => {
+        roleOptions.forEach(opt => opt.classList.remove('active'));
+        option.classList.add('active');
+        roleSlider.style.transform = `translateX(${index * 100}%)`;
+        setCurrentRole(option.dataset.role);
+      });
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Handle login logic here
+    console.log('Login attempt with role:', currentRole);
+    // For now, just navigate to dashboard
+    navigate('/dashboard');
+  };
+
   return (
-    <>
-    <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-      <motion.div 
-        className="w-full max-w-md glass-card rounded-3xl p-8 overflow-hidden relative"
-        initial="hidden" animate="visible" variants={fadeIn}
-      >
-        <div className="absolute inset-0 bg-hero-glow opacity-10 pointer-events-none" />
+    <div className="min-h-screen flex justify-center items-center font-['Inter'] relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <div className="absolute inset-0 bg-gradient-radial from-indigo-200/20 via-purple-200/10 to-transparent"></div>
+      </div>
 
-        <div className="relative z-10">
-          <div className="text-center mb-10">
-            <motion.div 
-              className="w-16 h-16 mx-auto bg-gradient-to-tr from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30 mb-4"
-              whileHover={{ scale: 1.05, rotate: 5 }}
-            >
-              <Sparkles className="text-white w-8 h-8" />
-            </motion.div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">CampusConnect</h1>
-            <p className="text-muted-foreground mt-2 text-sm">Where campus life synchronizes.</p>
+      <div id="particles-container" className="absolute inset-0 z-0"></div>
+
+      <div className="glass-card relative z-10 w-full max-w-md p-8 bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-xl">
+        <div className="logo-section text-center mb-10">
+          <div className="logo-icon mx-auto mb-5 w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <svg viewBox="0 0 24 24" className="w-8 h-8 text-white">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
           </div>
-
-          <div className="flex gap-2 p-1 bg-black/40 rounded-xl mb-8">
-            <button 
-              onClick={() => setIsLogin(true)}
-              className={cn("flex-1 py-2 text-sm font-medium rounded-lg transition-all", isLogin ? "bg-white/10 text-white shadow" : "text-muted-foreground hover:text-white")}
-            >
-              Sign In
-            </button>
-            <button 
-              onClick={() => setIsLogin(false)}
-              className={cn("flex-1 py-2 text-sm font-medium rounded-lg transition-all", !isLogin ? "bg-white/10 text-white shadow" : "text-muted-foreground hover:text-white")}
-            >
-              Register
-            </button>
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.form 
-               key={isLogin ? "login" : "register"}
-               initial="hidden" animate="visible" exit="exit" variants={fadeIn}
-               className="space-y-4"
-               onSubmit={handleAuth}
-            >
-              {!isLogin && (
-                <div className="flex justify-between gap-2 mb-6">
-                  {['user', 'organisation', 'member'].map(type => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setAuthType(type)}
-                      className={cn(
-                        "flex flex-col items-center gap-2 p-3 rounded-xl border flex-1 transition-all",
-                        authType === type ? "border-primary bg-primary/10 text-white" : "border-white/5 bg-white/5 text-muted-foreground hover:border-white/20"
-                      )}
-                    >
-                      {type === 'user' && <User className="w-5 h-5" />}
-                      {type === 'organisation' && <Building2 className="w-5 h-5" />}
-                      {type === 'member' && <Users className="w-5 h-5" />}
-                      <span className="text-[10px] uppercase font-bold tracking-wider">{type}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {(!isLogin || authType !== 'user') && (
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input name="name" placeholder="Full Name" required={!isLogin} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
-                </div>
-              )}
-
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input name="email" type="email" placeholder="Email address" required className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
-              </div>
-
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input name="password" type="password" placeholder="Password" required className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
-              </div>
-
-              {!isLogin && authType === 'member' && (
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input name="orgId" placeholder="Organization ID" required className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white transition-all placeholder:text-muted-foreground/50" />
-                </div>
-              )}
-
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                className="w-full py-3.5 mt-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-medium flex items-center justify-center gap-2 group hover:shadow-lg hover:shadow-primary/25 transition-all"
-              >
-                {isLogin ? 'Enter Hub' : 'Initialize Identity'}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </motion.button>
-            </motion.form>
-          </AnimatePresence>
+          <h1 className="logo-title text-3xl font-bold text-slate-900 mb-2">CampusConnect</h1>
+          <p className="logo-subtitle text-slate-600">Distributed Event Platform</p>
         </div>
-      </motion.div>
+
+        <div className="role-selector flex bg-slate-100 p-1 rounded-xl mb-8 relative">
+          <div id="roleSlider" className="role-slider absolute top-1 left-1 h-10 bg-indigo-600 rounded-lg transition-transform duration-300 ease-out shadow-sm"></div>
+          <button className="role-option active flex-1 py-3 text-sm font-medium text-white rounded-lg" data-role="student">Student</button>
+          <button className="role-option flex-1 py-3 text-sm font-medium text-slate-600 rounded-lg" data-role="organizer">Organizer</button>
+          <button className="role-option flex-1 py-3 text-sm font-medium text-slate-600 rounded-lg" data-role="admin">Admin</button>
+        </div>
+
+        <form id="loginForm" onSubmit={handleSubmit}>
+          <div className="form-group mb-6 opacity-0">
+            <label className="form-label block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">University Email</label>
+            <div className="relative">
+              <input
+                type="email"
+                className="form-input w-full py-4 px-5 text-slate-900 bg-white border border-slate-200 rounded-xl outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all"
+                id="emailInput"
+                placeholder="your.name@university.edu"
+                required
+              />
+              <svg className="input-icon absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <div className="form-group mb-6 opacity-0">
+            <label className="form-label block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Password</label>
+            <div className="relative">
+              <input
+                type="password"
+                className="form-input w-full py-4 px-5 text-slate-900 bg-white border border-slate-200 rounded-xl outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all"
+                id="passwordInput"
+                placeholder="Enter your password"
+                required
+              />
+              <svg className="input-icon absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+          </div>
+
+          <button type="submit" className="signin-button w-full py-4 text-white bg-indigo-600 border-none rounded-xl cursor-pointer transition-all duration-300 hover:bg-indigo-700 hover:-translate-y-0.5 hover:shadow-lg opacity-0 font-semibold text-base">
+            Sign In
+          </button>
+
+          <div className="error-message mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center hidden" id="errorMessage"></div>
+        </form>
+
+        <div className="forgot-password text-center mt-5 opacity-0">
+          <a href="#" className="text-sm text-indigo-600 hover:text-indigo-700 no-underline font-medium">Forgot your password?</a>
+        </div>
+      </div>
+
+      <div className="service-status fixed bottom-6 right-6 flex items-center gap-3 py-3 px-5 bg-white/80 backdrop-blur-md border border-slate-200 rounded-3xl shadow-lg z-50 opacity-0">
+        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+        <div>
+          <div className="status-text text-sm font-medium text-slate-700">Auth Service Online</div>
+          <div className="status-port text-xs text-slate-500">Port 3001</div>
+        </div>
+      </div>
     </div>
-    </>
   );
-}
+};
+
+export default Auth;

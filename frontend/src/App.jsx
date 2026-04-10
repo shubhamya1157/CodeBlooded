@@ -3,6 +3,8 @@ import { AnimatePresence } from 'framer-motion';
 
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
+import Events from './pages/Events';
 
 function App() {
   return (
@@ -14,8 +16,9 @@ function App() {
         
         <AnimatePresence mode="wait">
           <Routes>
-            <Route path="/" element={<Navigate to="/auth" replace />} />
+            <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/events" element={<Events />} />
             <Route path="/dashboard/*" element={<Dashboard />} />
           </Routes>
         </AnimatePresence>
