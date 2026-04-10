@@ -158,8 +158,6 @@ docker-compose logs -f    # Stream logs
 Copy `.env.example` to `.env` and configure:
 
 ```bash
-# Critical for hackathon
-ANTHROPIC_API_KEY=sk-ant-...          # Get from Anthropic console
 
 # JWT Keys (generate RS256 pair)
 JWT_PRIVATE_KEY=...

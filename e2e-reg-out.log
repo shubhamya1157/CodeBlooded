@@ -1,0 +1,6 @@
+
+> registration-notification-service@1.0.0 start
+> node src/index.js
+
+Registration Service running on port 4103
+Registration DB Connected

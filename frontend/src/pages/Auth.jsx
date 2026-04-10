@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { Building2, User, Users, Lock, Mail, ArrowRight, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -19,12 +21,12 @@ export default function Auth() {
     e.preventDefault();
     try {
       const formData = new FormData(e.target);
-      const email = formData.get('email');
-      const password = formData.get('password');
-      const name = formData.get('name');
-      const orgId = formData.get('orgId');
+      const email = String(formData.get('email') || '').trim();
+      const password = String(formData.get('password') || '');
+      const name = String(formData.get('name') || '').trim();
+      const orgId = String(formData.get('orgId') || '').trim();
 
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const endpoint = isLogin ? '/auth/login' : '/auth/register';
       
       const payload = isLogin 
         ? { email, password }
@@ -36,19 +38,28 @@ export default function Auth() {
             ...(authType === 'member' && { orgId })
           };
 
-      console.log('Sending payload:', payload);
-      const res = await fetch(`http://localhost:8080${endpoint}`, {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        // Connected to backend successfully
-        localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
-        navigate('/dashboard');
+        if (data.accessToken) localStorage.setItem('accessToken', data.accessToken);
+        if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+
+        if (!isLogin) {
+          navigate('/dashboard');
+          return;
+        }
+
+        if (data.accessToken) {
+          navigate('/dashboard');
+          return;
+        }
+
+        alert('Login succeeded but token was not returned by backend.');
       } else {
         alert(data.error || 'Authentication Failed');
       }
@@ -61,7 +72,7 @@ export default function Auth() {
   return (
     <>
     <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-      <motion.div 
+      <Motion.div 
         className="w-full max-w-md glass-card rounded-3xl p-8 overflow-hidden relative"
         initial="hidden" animate="visible" variants={fadeIn}
       >
@@ -69,12 +80,12 @@ export default function Auth() {
 
         <div className="relative z-10">
           <div className="text-center mb-10">
-            <motion.div 
+            <Motion.div 
               className="w-16 h-16 mx-auto bg-gradient-to-tr from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30 mb-4"
               whileHover={{ scale: 1.05, rotate: 5 }}
             >
               <Sparkles className="text-white w-8 h-8" />
-            </motion.div>
+            </Motion.div>
             <h1 className="text-3xl font-bold tracking-tight text-white">CampusConnect</h1>
             <p className="text-muted-foreground mt-2 text-sm">Where campus life synchronizes.</p>
           </div>
@@ -95,7 +106,7 @@ export default function Auth() {
           </div>
 
           <AnimatePresence mode="wait">
-            <motion.form 
+            <Motion.form 
                key={isLogin ? "login" : "register"}
                initial="hidden" animate="visible" exit="exit" variants={fadeIn}
                className="space-y-4"
@@ -146,7 +157,7 @@ export default function Auth() {
                 </div>
               )}
 
-              <motion.button 
+              <Motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
@@ -154,11 +165,11 @@ export default function Auth() {
               >
                 {isLogin ? 'Enter Hub' : 'Initialize Identity'}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </motion.button>
-            </motion.form>
+              </Motion.button>
+            </Motion.form>
           </AnimatePresence>
         </div>
-      </motion.div>
+      </Motion.div>
     </div>
     </>
   );
