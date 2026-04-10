@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusConnect - Login</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a0a2e 50%, #16213e 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated gradient overlay */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(120, 50, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(88, 28, 200, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Particle container */
+        #particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.6), rgba(120, 50, 255, 0.4));
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(120, 50, 255, 0.3);
+        }
+
+        .particle::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(to bottom, rgba(139, 92, 246, 0.4), transparent);
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .connection-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+            transform-origin: left center;
+        }
+
+        /* Glass Card */
+        .glass-card {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 420px;
+            padding: 48px 40px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* Logo Section */
+        .logo-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #7c3aed 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+        }
+
+        .logo-icon svg {
+            width: 32px;
+            height: 32px;
+            fill: white;
+        }
+
+        .logo-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .logo-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 400;
+        }
+
+        /* Role Selector */
+        .role-selector {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .role-option {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            border-radius: 10px;
+            transition: color 0.3s ease;
+            position: relative;
+            z-index: 2;
+            border: none;
+            background: transparent;
+        }
+
+        .role-option.active {
+            color: #ffffff;
+        }
+
+        .role-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            height: calc(100% - 8px);
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border-radius: 10px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 24px;
+            opacity: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .form-input:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.3);
+            transition: color 0.3s ease;
+        }
+
+        .form-input:focus + .input-icon {
+            color: #8b5cf6;
+        }
+
+        /* Sign In Button */
+        .signin-button {
+            width: 100%;
+            padding: 18px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+            opacity: 0;
+        }
+
+        .signin-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .signin-button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.6), 0 0 40px rgba(139, 92, 246, 0.3);
+        }
+
+        .signin-button:hover::before {
+            left: 100%;
+        }
+
+        .signin-button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .signin-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading State */
+        .button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .signin-button.loading .spinner {
+            display: block;
+        }
+
+        .signin-button.loading .button-text {
+            display: none;
+        }
+
+        /* Error Message */
+        .error-message {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            color: #f87171;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+            opacity: 0;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Service Status Indicator */
+        .service-status {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 18px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            z-index: 100;
+            opacity: 0;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .status-dot.error {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444;
+            animation: none;
+        }
+
+        .status-dot.connecting {
+            background: #f59e0b;
+            box-shadow: 0 0 10px #f59e0b;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .status-text {
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .status-port {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Shake Animation for Error */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+            20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+
+        .glass-card.shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* Forgot Password Link */
+        .forgot-password {
+            text-align: center;
+            margin-top: 20px;
+            opacity: 0;
+        }
+
+        .forgot-password a {
+            font-size: 13px;
+            color: rgba(139, 92, 246, 0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            color: #a855f7;
+            text-decoration: underline;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            body {
+                padding: 20px;
+            }
+
+            .glass-card {
+                padding: 36px 24px;
+                max-width: 100%;
+            }
+
+            .logo-title {
+                font-size: 24px;
+            }
+
+            .role-option {
+                font-size: 12px;
+                padding: 10px 6px;
+            }
+
+            .service-status {
+                bottom: 16px;
+                right: 16px;
+                left: 16px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle Background -->
+    <div id="particles-container"></div>
+
+    <!-- Main Login Card -->
+    <div class="glass-card" id="loginCard">
+        <!-- Logo Section -->
+        <div class="logo-section">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <h1 class="logo-title">CampusConnect</h1>
+            <p class="logo-subtitle">Distributed Event Platform</p>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="role-selector">
+            <div class="role-slider" id="roleSlider"></div>
+            <button class="role-option active" data-role="student">Student</button>
+            <button class="role-option" data-role="organizer">Organizer</button>
+            <button class="role-option" data-role="admin">Admin</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label">University Email</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="email" 
+                        class="form-input" 
+                        id="emailInput"
+                        placeholder="your.name@university.edu"
+                        required
+                    >
+                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="password" 
+                        class="form-input" 
+                        id="passwordInput"
+                        placeholder="Enter your password"
+                        required
+                    >
+                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <button type="submit" class="signin-button" id="signinButton">
+                <div class="button-content">
+                    <div class="spinner"></div>
+                    <span class="button-text">Sign In</span>
+                </div>
+            </button>
+
+            <div class="error-message" id="errorMessage"></div>
+        </form>
+
+        <div class="forgot-password">
+            <a href="#">Forgot your password?</a>
+        </div>
+    </div>
+
+    <!-- Service Status Indicator -->
+    <div class="service-status" id="serviceStatus">
+        <div class="status-dot" id="statusDot"></div>
+        <div>
+            <div class="status-text" id="statusText">Auth Service Online</div>
+            <div class="status-port">Port 3001</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const AUTH_SERVICE_URL = 'http://localhost:3001';
+        let currentRole = 'student';
+
+        // Initialize GSAP
+        gsap.registerPlugin();
+
+        // Create floating particles
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            const particleCount = 15;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const size = Math.random() * 8 + 4;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                particle.style.opacity = Math.random() * 0.5 + 0.2;
+                
+                container.appendChild(particle);
+
+                // Animate each particle
+                gsap.to(particle, {
+                    x: `random(-100, 100)`,
+                    y: `random(-100, 100)`,
+                    duration: `random(10, 20)`,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: 'sine.inOut',
+                    delay: Math.random() * 5
+                });
+
+                // Pulse animation
+                gsap.to(particle, {
+                    scale: `random(0.8, 1.2)`,
+                    opacity: `random(0.2, 0.6)`,
+                    duration: `random(2, 4)`,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: 'sine.inOut',
+                    delay: Math.random() * 2
+                });
+            }
+
+            // Create connection lines between particles
+            for (let i = 0; i < 8; i++) {
+                const line = document.createElement('div');
+                line.className = 'connection-line';
+                line.style.left = `${Math.random() * 100}%`;
+                line.style.top = `${Math.random() * 100}%`;
+                line.style.width = `${Math.random() * 150 + 50}px`;
+                line.style.transform = `rotate(${Math.random() * 360}deg)`;
+                line.style.opacity = Math.random() * 0.3 + 0.1;
+                container.appendChild(line);
+
+                gsap.to(line, {
+                    opacity: `random(0.1, 0.4)`,
+                    duration: `random(3, 6)`,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: 'sine.inOut'
+                });
+            }
+        }
+
+        // Staggered entrance animation
+        function entranceAnimation() {
+            const tl = gsap.timeline();
+
+            tl.from('.logo-icon', {
+                scale: 0,
+                rotation: -180,
+                opacity: 0,
+                duration: 0.8,
+                ease: 'back.out(1.7)'
+            })
+            .from('.logo-title', {
+                y: 20,
+                opacity: 0,
+                duration: 0.6,
+                ease: 'power3.out'
+            }, '-=0.4')
+            .from('.logo-subtitle', {
+                y: 15,
+                opacity: 0,
+                duration: 0.5,
+                ease: 'power3.out'
+            }, '-=0.3')
+            .from('.role-selector', {
+                y: 20,
+                opacity: 0,
+                duration: 0.5,
+                ease: 'power3.out'
+            }, '-=0.2')
+            .to('.form-group', {
+                y: 0,
+                opacity: 1,
+                duration: 0.5,
+                stagger: 0.1,
+                ease: 'power3.out'
+            }, '-=0.2')
+            .to('.signin-button', {
+                y: 0,
+                opacity: 1,
+                duration: 0.5,
+                ease: 'power3.out'
+            }, '-=0.3')
+            .to('.forgot-password', {
+                y: 0,
+                opacity: 1,
+                duration: 0.4,
+                ease: 'power3.out'
+            }, '-=0.2')
+            .to('.service-status', {
+                opacity: 1,
+                duration: 0.5,
+                ease: 'power3.out'
+            }, '-=0.2');
+        }
+
+        // Role selector functionality
+        function initRoleSelector() {
+            const roleOptions = document.querySelectorAll('.role-option');
+            const roleSlider = document.getElementById('roleSlider');
+            
+            // Set initial slider width
+            const optionWidth = roleOptions[0].offsetWidth;
+            roleSlider.style.width = `${optionWidth}px`;
+
+            roleOptions.forEach((option, index) => {
+                option.addEventListener('click', () => {
+                    // Update active state
+                    roleOptions.forEach(opt => opt.classList.remove('active'));
+                    option.classList.add('active');
+                    
+                    // Move slider
+                    roleSlider.style.transform = `translateX(${index * 100}%)`;
+                    
+                    // Update current role
+                    currentRole = option.dataset.role;
+                    
+                    // Animate selection
+                    gsap.fromTo(roleSlider, 
+                        { scale: 0.95 },
+                        { scale: 1, duration: 0.3, ease: 'back.out(1.7)' }
+                    );
+                });
+            });
+        }
+
+        // Check service status
+        async function checkServiceStatus() {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+
+            try {
+                const response = await fetch(`${AUTH_SERVICE_URL}/health`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    statusDot.className = 'status-dot';
+                    statusText.textContent = 'Auth Service Online';
+                    return true;
+                } else {
+                    throw new Error('Service unavailable');
+                }
+            } catch (error) {
+                statusDot.className = 'status-dot error';
+                statusText.textContent = 'Service Unavailable';
+                return false;
+            }
+        }
+
+        // Handle form submission
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const button = document.getElementById('signinButton');
+            const errorMessage = document.getElementById('errorMessage');
+            const loginCard = document.getElementById('loginCard');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+
+            // Hide previous error
+            errorMessage.classList.remove('show');
+            gsap.to(errorMessage, { opacity: 0, duration: 0.2 });
+
+            // Show loading state
+            button.classList.add('loading');
+            button.disabled = true;
+            statusDot.className = 'status-dot connecting';
+            statusText.textContent = 'Connecting to Auth Service...';
+
+            try {
+                const response = await fetch(`${AUTH_SERVICE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        role: currentRole
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Store JWT token
+                    localStorage.setItem('campusConnectToken', data.token);
+                    localStorage.setItem('campusConnectUser', JSON.stringify(data.user));
+                    localStorage.setItem('campusConnectRole', currentRole);
+
+                    // Success animation
+                    statusDot.className = 'status-dot';
+                    statusText.textContent = 'Auth Service Online';
+                    
+                    gsap.to(button, {
+                        backgroundColor: '#22c55e',
+                        duration: 0.3
+                    });
+
+                    button.querySelector('.button-text').textContent = 'Success!';
+
+                    // Redirect after success
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                } else {
+                    throw new Error('Invalid credentials');
+                }
+            } catch (error) {
+                // Reset button
+                button.classList.remove('loading');
+                button.disabled = false;
+                statusDot.className = 'status-dot error';
+                statusText.textContent = 'Connection Failed';
+
+                // Show error message
+                errorMessage.textContent = error.message.includes('fetch') 
+                    ? 'Service Temporarily Unavailable. Please try again later.'
+                    : 'Invalid email or password. Please try again.';
+                errorMessage.classList.add('show');
+                gsap.to(errorMessage, { opacity: 1, duration: 0.3 });
+
+                // Shake animation
+                loginCard.classList.add('shake');
+                setTimeout(() => loginCard.classList.remove('shake'), 500);
+
+                // Reset status after delay
+                setTimeout(() => {
+                    checkServiceStatus();
+                }, 3000);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            entranceAnimation();
+            initRoleSelector();
+            checkServiceStatus();
+
+            // Form submission
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+            // Periodic service status check
+            setInterval(checkServiceStatus, 30000);
+        });
+
+        // Handle window resize for role selector
+        window.addEventListener('resize', () => {
+            const roleOptions = document.querySelectorAll('.role-option');
+            const roleSlider = document.getElementById('roleSlider');
+            const activeIndex = Array.from(roleOptions).findIndex(opt => opt.classList.contains('active'));
+            
+            if (roleOptions[0]) {
+                roleSlider.style.width = `${roleOptions[0].offsetWidth}px`;
+                roleSlider.style.transform = `translateX(${activeIndex * 100}%)`;
+            }
+        });
+    </script>
+</body>
+</html>
