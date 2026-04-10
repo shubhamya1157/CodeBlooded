@@ -13,18 +13,41 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI_REG || 'mongodb://localhost:27019/registrations')
-  .then(() => console.log('Registration DB Connected'))
-  .catch(err => console.error('DB Err:', err));
+const connectDB = async (retries = 5) => {
+  const mongoUri = process.env.MONGO_URI_REG || 'mongodb://localhost:27019/registrations';
+  for (let i = 0; i < retries; i++) {
+    try {
+      await mongoose.connect(mongoUri, {
+        retryWrites: true,
+        serverSelectionTimeoutMS: 15000,
+        socketTimeoutMS: 45000,
+        maxPoolSize: 10
+      });
+      console.log('Registration DB Connected');
+      return true;
+    } catch (err) {
+      console.error(`DB connection attempt ${i + 1}/${retries} failed:`, err.message);
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  }
+  console.error('Failed to connect to database after retries. Proceeding anyway...');
+  return false;
+};
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'registration-notification-service' });
-});
+(async () => {
+  try {
+    await connectDB();
+    
+    app.use('/', registrationRoutes);
 
-app.use('/', registrationRoutes);
-app.use('/registrations', registrationRoutes);
-
-const PORT = process.env.PORT || 3003;
-app.listen(PORT, () => {
-  console.log(`Registration Service running on port ${PORT}`);
-});
+    const PORT = process.env.PORT || 3003;
+    app.listen(PORT, () => {
+      console.log(`Registration Service running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('Fatal error during initialization:', err);
+    process.exit(1);
+  }
+})();

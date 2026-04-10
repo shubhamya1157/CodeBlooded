@@ -4,7 +4,6 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import http from 'http';
 
 import * as url from 'url';
 import path from 'path';
@@ -20,8 +19,6 @@ const limiter = rateLimit({
 
 app.use(cors());
 app.use(morgan('dev'));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 const AUTH_SERVICE = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const EVENTS_SERVICE = process.env.EVENTS_SERVICE_URL || 'http://localhost:3002';
@@ -32,93 +29,42 @@ console.log('Service URLs:', { AUTH_SERVICE, EVENTS_SERVICE, REGISTRATION_SERVIC
 // Apply rate limiting only to /api routes
 app.use('/api/', limiter);
 
+const proxyOptions = (target) => ({
+  target,
+  changeOrigin: true,
+  timeout: 30000,
+  proxyTimeout: 30000,
+  onError: (err, req, res) => {
+    console.error(`Proxy error [${req.method} ${req.originalUrl}] -> ${target}:`, err.message);
+    if (!res.headersSent) {
+      res.status(503).json({ error: 'Service unavailable', details: err.message });
+    }
+  },
+});
+
 // Auth service proxy routes
 app.use('/api/auth', createProxyMiddleware({
-  target: AUTH_SERVICE,
-  changeOrigin: true,
-  pathRewrite: { '^/api/auth': '/auth' },
-  timeout: 30000,
-  proxyTimeout: 30000,
-  onError: (err, req, res) => {
-    console.error('Auth proxy error:', err.message);
-    res.status(503).json({ error: 'Auth service unavailable', details: err.message });
-  },
-  onProxyRes: (proxyRes, req, res) => {
-    console.log(`Auth Response: ${proxyRes.statusCode} ${req.method} ${req.url}`);
-  }
+  ...proxyOptions(AUTH_SERVICE),
+  pathRewrite: (path) => `/auth${path === '/' ? '' : path}`,
 }));
-
 app.use('/api/users', createProxyMiddleware({
-  target: AUTH_SERVICE,
-  changeOrigin: true,
-  pathRewrite: { '^/api/users': '/users' },
-  timeout: 30000,
-  proxyTimeout: 30000,
-  onError: (err, req, res) => {
-    console.error('Users proxy error:', err.message);
-    res.status(503).json({ error: 'Auth service unavailable' });
-  }
+  ...proxyOptions(AUTH_SERVICE),
+  pathRewrite: (path) => `/users${path === '/' ? '' : path}`,
 }));
-
 app.use('/api/organizations', createProxyMiddleware({
-  target: AUTH_SERVICE,
-  changeOrigin: true,
-  pathRewrite: { '^/api/organizations': '/organizations' },
-  timeout: 30000,
-  proxyTimeout: 30000,
-  onError: (err, req, res) => {
-    console.error('Orgs proxy error:', err.message);
-    res.status(503).json({ error: 'Auth service unavailable' });
-  }
+  ...proxyOptions(AUTH_SERVICE),
+  pathRewrite: (path) => `/organizations${path === '/' ? '' : path}`,
 }));
-
 app.use('/api/members', createProxyMiddleware({
-  target: AUTH_SERVICE,
-  changeOrigin: true,
-  pathRewrite: { '^/api/members': '/members' },
-  timeout: 30000,
-  proxyTimeout: 30000,
-  onError: (err, req, res) => {
-    console.error('Members proxy error:', err.message);
-    res.status(503).json({ error: 'Auth service unavailable' });
-  }
+  ...proxyOptions(AUTH_SERVICE),
+  pathRewrite: (path) => `/members${path === '/' ? '' : path}`,
 }));
 
-// Events service proxy
-app.use('/api/events', createProxyMiddleware({
-  target: EVENTS_SERVICE,
-  changeOrigin: true,
-  pathRewrite: { '^/api/events': '' },
-  timeout: 30000,
-  proxyTimeout: 30000,
-  onError: (err, req, res) => {
-    console.error('Events proxy error:', err.message);
-    res.status(503).json({ error: 'Events service unavailable' });
-  }
-}));
+// Events service proxy routes
+app.use('/api/events', createProxyMiddleware(proxyOptions(EVENTS_SERVICE)));
 
-// Registration service proxy
-app.use('/api/register', createProxyMiddleware({
-  target: REGISTRATION_SERVICE,
-  changeOrigin: true,
-  pathRewrite: { '^/api/register': '' },
-  timeout: 30000,
-  proxyTimeout: 30000,
-  onError: (err, req, res) => {
-    console.error('Registration proxy error:', err.message);
-    res.status(503).json({ error: 'Registration service unavailable' });
-  }
-}));
-
-app.use('/api/registrations', createProxyMiddleware({
-  target: REGISTRATION_SERVICE,
-  changeOrigin: true,
-  pathRewrite: { '^/api/registrations': '/registrations' },
-  onError: (err, req, res) => {
-    console.error('Registrations proxy error:', err);
-    res.status(503).json({ error: 'Registration service unavailable' });
-  }
-}));
+// Registration service proxy routes
+app.use('/api/register', createProxyMiddleware(proxyOptions(REGISTRATION_SERVICE)));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
