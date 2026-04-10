@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
+    --primary: 250 89% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 10% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 10% 15%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 280 89% 65%;
+    --accent-foreground: 0 0% 100%;
+    --border: 240 10% 15%;
+    --input: 240 10% 15%;
+    --ring: 250 89% 65%;
+    --radius: 0.75rem;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-background/60 backdrop-blur-xl border border-white/10;
+  }
+  
+  .glass-card {
+    @apply bg-card/40 backdrop-blur-2xl border border-white/5 shadow-2xl;
+  }
+}

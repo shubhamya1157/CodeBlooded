@@ -1,0 +1,32 @@
+version: '3.9'
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports: ["5672:5672", "15672:15672"]
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: secret
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  mongo-auth:
+    image: mongo:7
+    ports: ["27017:27017"]
+    volumes: ["mongo-auth-data:/data/db"]
+
+  mongo-events:
+    image: mongo:7
+    ports: ["27018:27017"]
+    volumes: ["mongo-events-data:/data/db"]
+
+  mongo-registrations:
+    image: mongo:7
+    ports: ["27019:27017"]
+    volumes: ["mongo-reg-data:/data/db"]
+
+volumes:
+  mongo-auth-data:
+  mongo-events-data:
+  mongo-reg-data:
