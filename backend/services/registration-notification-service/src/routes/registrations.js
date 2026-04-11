@@ -35,11 +35,6 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'userId and eventId are required' });
     }
 
-    const existing = await Registration.findOne({ userId, eventId });
-    if (existing) {
-      return res.status(409).json({ error: 'Already registered for this event', registration: existing });
-    }
-
     let status = 'confirmed';
     const event = await getEventDetails(eventId);
     if (
@@ -50,6 +45,28 @@ router.post('/', async (req, res) => {
       event.registeredCount >= event.capacity
     ) {
       status = 'waitlisted';
+    }
+
+    const existing = await Registration.findOne({ userId, eventId });
+    if (existing) {
+      if (existing.status !== 'cancelled') {
+        return res.status(409).json({ error: 'Already registered for this event', registration: existing });
+      }
+
+      existing.status = status;
+      existing.orgId = orgId || existing.orgId;
+      existing.source = 'api';
+      await existing.save();
+
+      if (status === 'confirmed') {
+        await updateEventRegisteredCount(eventId, 1);
+      }
+
+      return res.status(200).json({
+        status,
+        message: status === 'waitlisted' ? 'Added to waitlist' : 'Registration confirmed',
+        registration: existing,
+      });
     }
 
     const registration = await Registration.create({

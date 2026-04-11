@@ -1,6 +1,0 @@
-
-> user-auth-service@1.0.0 start
-> node src/index.js
-
-User Auth Service running on port 4101
-User Auth DB Connected

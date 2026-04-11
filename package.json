@@ -11,12 +11,16 @@
   "scripts": {
     "start": "docker-compose up -d",
     "stop": "docker-compose down",
-    "dev:auth": "npm run dev --workspace=backend/services/user-auth-service",
-    "dev:events": "npm run dev --workspace=backend/services/event-management-service",
-    "dev:registration": "npm run dev --workspace=backend/services/registration-notification-service",
-    "dev:gateway": "npm run dev --workspace=backend/services/api-gateway",
-    "dev:frontend": "npm run dev --workspace=frontend",
-    "dev": "npm-run-all --parallel dev:*"
+    "dev:auth": "cd backend/services/user-auth-service && npm run dev",
+    "dev:events": "cd backend/services/event-management-service && npm run dev",
+    "dev:registration": "cd backend/services/registration-notification-service && npm run dev",
+    "dev:gateway": "cd backend/services/api-gateway && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "npm-run-all --parallel dev:*",
+    "dev:services": "npm-run-all --parallel dev:auth dev:events dev:registration dev:gateway",
+    "logs": "tail -f logs/*.log",
+    "health": "bash health.sh",
+    "setup": "bash setup.sh"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"
