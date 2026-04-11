@@ -89,3 +89,7 @@ export const usersAPI = {
     body: JSON.stringify(data),
   }),
 };
+
+export const organizationsAPI = {
+  getAll: () => request('/organizations'),
+};

@@ -16,7 +16,7 @@
     "dev:registration": "cd backend/services/registration-notification-service && npm run dev",
     "dev:gateway": "cd backend/services/api-gateway && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev": "npm-run-all --parallel dev:*",
+    "dev": "npm-run-all --parallel dev:frontend dev:services",
     "dev:services": "npm-run-all --parallel dev:auth dev:events dev:registration dev:gateway",
     "logs": "tail -f logs/*.log",
     "health": "bash health.sh",

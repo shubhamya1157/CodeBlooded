@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, MapPin, Users, Zap, ChevronLeft, Clock, CheckCircle2, Ticket, ShieldCheck, Sparkles } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EventVisual from '../components/EventVisual';
@@ -98,7 +98,17 @@ export default function EventDetail() {
         // Mock registration for demo events
         setTimeout(() => {
           setIsRegistered(true);
-          setRegistration({ status: 'confirmed', _id: 'demo-reg' });
+          const newReg = { status: 'confirmed', _id: `demo-reg-${id}`, eventId: id, userId: currentUserId };
+          setRegistration(newReg);
+          
+          // Save for dashboard
+          const storedRegs = JSON.parse(localStorage.getItem('demoRegistrations') || '[]');
+          localStorage.setItem('demoRegistrations', JSON.stringify([...storedRegs.filter(r => r.eventId !== id), newReg]));
+
+          setEvent(prev => ({
+            ...prev,
+            registeredCount: (prev.registeredCount || 0) + 1
+          }));
           addNotification({
             type: 'success',
             title: 'Registered!',
@@ -116,6 +126,12 @@ export default function EventDetail() {
         title: response.status === 'confirmed' ? 'Registered!' : 'Added to Waitlist',
         message: response.message,
       });
+
+      // Optimistic update for blazing fast UI
+      setEvent(prev => ({
+        ...prev,
+        registeredCount: (prev.registeredCount || 0) + 1
+      }));
 
       setIsRegistered(true);
       setRegistration(response.registration);
@@ -143,6 +159,15 @@ export default function EventDetail() {
         setTimeout(() => {
           setIsRegistered(false);
           setRegistration(null);
+
+          // Remove from dashboard localStorage
+          const storedRegs = JSON.parse(localStorage.getItem('demoRegistrations') || '[]');
+          localStorage.setItem('demoRegistrations', JSON.stringify(storedRegs.filter(r => r.eventId !== id)));
+
+          setEvent(prev => ({
+            ...prev,
+            registeredCount: Math.max(0, (prev.registeredCount || 1) - 1)
+          }));
           addNotification({
             type: 'success',
             title: 'Registration Cancelled',
@@ -165,6 +190,12 @@ export default function EventDetail() {
         title: 'Registration Cancelled',
         message: response.message,
       });
+
+      // Optimistic update for blazing fast UI
+      setEvent(prev => ({
+        ...prev,
+        registeredCount: Math.max(0, (prev.registeredCount || 1) - 1)
+      }));
 
       setIsRegistered(false);
       setRegistration(null);
@@ -339,9 +370,22 @@ export default function EventDetail() {
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">Capacity</span>
-                  <span className="text-blue-700 dark:text-blue-300 font-semibold">
-                    {event.registeredCount || 0} / {event.capacity || 100}
-                  </span>
+                  <div className="flex items-center space-x-1 text-blue-700 dark:text-blue-300 font-semibold relative overflow-hidden h-6 min-w-[3rem] justify-end">
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      <motion.span
+                        key={event.registeredCount || 0}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 25 }}
+                        className="tabular-nums"
+                      >
+                        {event.registeredCount || 0}
+                      </motion.span>
+                    </AnimatePresence>
+                    <span className="mx-1">/</span>
+                    <span>{event.capacity || 100}</span>
+                  </div>
                 </div>
                 <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                   <motion.div

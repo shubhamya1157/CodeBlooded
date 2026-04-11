@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, MapPin, Users } from 'lucide-react';
 import { eventsAPI } from '../lib/api';
 import { useUIStore } from '../store/ui';
+import { useAuthStore } from '../store/auth';
 import LoadingSpinner from './LoadingSpinner';
 
 export default function CreateEventModal({ isOpen, onClose, onEventCreated }) {
   const { addNotification } = useUIStore();
+  const { getUserId } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -30,9 +32,13 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }) {
     setLoading(true);
 
     try {
+      const currentUserId = getUserId();
+      
       const eventData = {
         ...formData,
         status: 'published',
+        orgId: currentUserId,
+        createdBy: currentUserId,
       };
 
       const response = await eventsAPI.create(eventData);
@@ -72,144 +78,148 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 transition-all"
           />
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] overflow-y-auto z-50"
-          >
-            <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/20 rounded-2xl p-8 backdrop-blur-xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto pointer-events-auto"
+            >
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none">
               {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Create New Event</h2>
+              <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <h2 className="text-2xl font-bold text-slate-950 dark:text-white">Create New Event</h2>
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-white dark:bg-slate-900/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full transition-colors"
                 >
-                  <X className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Event Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Event Name</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Event Name</label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Tech Summit 2024"
-                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-blue-400 focus:bg-white dark:bg-slate-900/20 transition-all"
+                    placeholder="Tech Summit 2026"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     required
                   />
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Description</label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
                     placeholder="Describe your event..."
                     rows="4"
-                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-blue-400 focus:bg-white dark:bg-slate-900/20 transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                     required
                   />
                 </div>
 
                 {/* Grid */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Date */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Date & Time</label>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Date & Time</label>
                     <input
                       type="datetime-local"
                       name="date"
                       value={formData.date}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900/10 border border-white/20 text-white focus:outline-none focus:border-blue-400 focus:bg-white dark:bg-slate-900/20 transition-all"
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       required
                     />
                   </div>
 
                   {/* Capacity */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Capacity</label>
-                    <input
-                      type="number"
-                      name="capacity"
-                      value={formData.capacity}
-                      onChange={handleChange}
-                      min="1"
-                      className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900/10 border border-white/20 text-white focus:outline-none focus:border-blue-400 focus:bg-white dark:bg-slate-900/20 transition-all"
-                      required
-                    />
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Capacity</label>
+                    <div className="relative">
+                      <Users className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+                      <input
+                        type="number"
+                        name="capacity"
+                        value={formData.capacity}
+                        onChange={handleChange}
+                        min="1"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Location */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    placeholder="Auditorium A, Building 5"
-                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-blue-400 focus:bg-white dark:bg-slate-900/20 transition-all"
-                    required
-                  />
-                </div>
+                {/* Location and Category Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Location */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Location</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+                      <input
+                        type="text"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleChange}
+                        placeholder="Auditorium A, Building 5"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
 
-                {/* Category */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900/10 border border-white/20 text-white focus:outline-none focus:border-blue-400 focus:bg-white dark:bg-slate-900/20 transition-all"
-                  >
-                    <option value="workshop">Workshop</option>
-                    <option value="hackathon">Hackathon</option>
-                    <option value="conference">Conference</option>
-                    <option value="social">Social Event</option>
-                    <option value="competition">Competition</option>
-                  </select>
+                  {/* Category */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Category</label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none cursor-pointer"
+                    >
+                      <option value="workshop">Workshop</option>
+                      <option value="hackathon">Hackathon</option>
+                      <option value="cultural">Cultural</option>
+                      <option value="sports">Sports</option>
+                      <option value="lecture">Lecture / Talk</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 py-3 rounded-lg border border-white/20 text-white font-semibold hover:bg-white dark:bg-slate-900/5 transition-all"
+                    className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all focus:outline-none focus:ring-2 focus:ring-slate-300"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:shadow-lg dark:shadow-none hover:shadow-blue-500/50 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
+                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold hover:shadow-lg dark:shadow-none hover:shadow-blue-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                   >
-                    {loading ? (
-                      <>
-                        <LoadingSpinner size="sm" />
-                        <span>Creating...</span>
-                      </>
-                    ) : (
-                      <span>Create Event</span>
-                    )}
+                    {loading ? <><LoadingSpinner size="sm" /><span>Creating...</span></> : <span>Publish Event</span>}
                   </button>
                 </div>
               </form>
             </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>

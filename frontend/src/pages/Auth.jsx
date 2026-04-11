@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, CheckCircle, Zap, Trophy, Users, Building2, AlertTriangle, Lightbulb, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { authAPI } from '../lib/api';
+import { authAPI, organizationsAPI } from '../lib/api';
 import BrandMark from '../components/BrandMark';
 
 const parseJwt = (token) => {
@@ -25,12 +25,30 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isLogin = searchParams.get('mode') !== 'register';
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '', name: '', type: 'user', organizationName: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+  const [existingOrgs, setExistingOrgs] = useState([]);
+
+  useEffect(() => {
+    const fetchOrgs = async () => {
+      if (!isLogin && formData.type === 'member') {
+        try {
+          const orgs = await organizationsAPI.getAll();
+          setExistingOrgs(orgs);
+          if (orgs.length > 0 && !formData.organizationName) {
+            setFormData(prev => ({ ...prev, organizationName: orgs[0]._id }));
+          }
+        } catch (err) {
+          console.error('Failed to fetch organizations', err);
+        }
+      }
+    };
+    fetchOrgs();
+  }, [isLogin, formData.type]);
+
   const { setUser } = useAuthStore();
 
   const handleChange = (e) => {
@@ -49,15 +67,23 @@ export default function Auth() {
       if (isLogin) {
         response = await authAPI.login(formData.email, formData.password);
       } else {
-        response = await authAPI.register({
-          type: formData.type, // Send the user type
+        const payload = {
+          type: formData.type,
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          organizationName: formData.organizationName, // Additional parameter for organisation/member
-        });
+        };
+
+        if (formData.type === 'member') {
+          // organizationName holds the _id in the select dropdown
+          payload.orgId = formData.organizationName; 
+        } else if (formData.type === 'organisation') {
+          payload.name = formData.organizationName; // The backend uses the name provided to create the org
+        }
+
+        response = await authAPI.register(payload);
       }
-      
+
       const token = response.accessToken;
       const jwtPayload = parseJwt(token);
       const accountType = jwtPayload?.type === 'organisation' ? 'organizer' : 'student';
@@ -186,11 +212,10 @@ export default function Auth() {
                         key={opt.id}
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, type: opt.id }))}
-                        className={`p-3 rounded-xl font-bold transition-all border-2 text-sm flex flex-col items-center justify-center gap-1 ${
-                          formData.type === opt.id
+                        className={`p-3 rounded-xl font-bold transition-all border-2 text-sm flex flex-col items-center justify-center gap-1 ${formData.type === opt.id
                             ? 'bg-blue-50 dark:bg-slate-800/50 border-blue-600 text-blue-700 dark:text-blue-300 shadow-[0_0_15px_-3px_rgba(37,99,235,0.2)] transform scale-[1.02]'
                             : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:bg-slate-800'
-                        }`}
+                          }`}
                       >
                         <div className={`${formData.type === opt.id ? 'text-blue-600 dark:text-blue-400 drop-shadow-sm dark:shadow-none' : 'text-gray-400 dark:text-gray-500'}`}>
                           {opt.icon}
@@ -213,32 +238,36 @@ export default function Auth() {
                   <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 pt-2">Organization Name</label>
                   <div className="relative">
                     <Building2 className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                    <input
-                      list="famous-orgs"
-                      type="text"
-                      name="organizationName"
-                      value={formData.organizationName}
-                      onChange={handleChange}
-                      placeholder={formData.type === 'organisation' ? "Enter new organization name" : "Select or search organization..."}
-                      required
-                      className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium"
-                    />
-                    <datalist id="famous-orgs">
-                      <option value="IIT Bombay Tech Club" />
-                      <option value="Stanford Computer Science Society" />
-                      <option value="MIT AI Club" />
-                      <option value="BITS Pilani Coding Club" />
-                      <option value="Harvard Innovation Labs" />
-                      <option value="Berkeley CS Association" />
-                      <option value="Oxford Tech Society" />
-                      <option value="CMU Robotics Club" />
-                      <option value="Google Developer Groups" />
-                      <option value="Microsoft Learn Student Ambassadors" />
-                      <option value="Major League Hacking (MLH)" />
-                      <option value="GitHub Campus Experts" />
-                      <option value="Meta Developer Circle" />
-                      <option value="AWS Educate" />
-                    </datalist>
+                    {formData.type === 'member' ? (
+                      <select
+                        name="organizationName"
+                        value={formData.organizationName}
+                        onChange={handleChange}
+                        required
+                        className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium appearance-none"
+                      >
+                        {existingOrgs.length === 0 ? (
+                          <option value="" disabled>Loading organizations...</option>
+                        ) : (
+                          <>
+                            <option value="" disabled>Select an Organization</option>
+                            {existingOrgs.map((org) => (
+                              <option key={org._id} value={org._id}>{org.name}</option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        name="organizationName"
+                        value={formData.organizationName}
+                        onChange={handleChange}
+                        placeholder="Enter new organization name"
+                        required
+                        className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium"
+                      />
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -335,7 +364,7 @@ export default function Auth() {
                 disabled={loading}
                 className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white font-black text-lg hover:shadow-xl dark:shadow-none hover:shadow-blue-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 mt-8 relative overflow-hidden group"
               >
-                <div className="absolute inset-0 bg-white dark:bg-slate-900/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out" />
+                <div className="absolute inset-0 bg-white/20 dark:bg-black/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out" />
                 <div className="relative flex items-center justify-center space-x-2">
                   {loading ? (
                     <>

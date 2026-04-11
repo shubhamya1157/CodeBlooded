@@ -41,7 +41,7 @@ export default function OrganizerDashboard() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)]px-4 sm:px-8 py-12">
+    <div className="min-h-[calc(100vh-64px)] px-4 sm:px-8 py-12 bg-slate-50 dark:bg-slate-950 transition-colors">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
@@ -49,16 +49,18 @@ export default function OrganizerDashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-12"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Organizer Dashboard</h1>
-              <p className="text-gray-400 dark:text-gray-500">Manage your events and registrations</p>
+              <h1 className="text-4xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
+                Organizer Dashboard
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your events and registrations</p>
             </div>
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center space-x-2 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:shadow-lg dark:shadow-none hover:shadow-blue-500/50"
+              className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 dark:shadow-none transition-all"
             >
               <Plus className="w-5 h-5" />
               <span>Create Event</span>
@@ -79,11 +81,15 @@ export default function OrganizerDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="p-6 rounded-xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5"
+              className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md dark:shadow-none transition-shadow"
             >
-              <stat.icon className="w-8 h-8 text-blue-400 mb-2" />
-              <p className="text-gray-400 dark:text-gray-500 text-sm">{stat.label}</p>
-              <p className="text-3xl font-bold text-white">{stat.value}</p>
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20">
+                  <stat.icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 font-semibold">{stat.label}</p>
+              </div>
+              <p className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -94,21 +100,27 @@ export default function OrganizerDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <h2 className="text-2xl font-bold text-white mb-6">Your Events</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Your Events</h2>
 
           {loading ? (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
               <LoadingSpinner />
             </div>
           ) : events.length === 0 ? (
-            <div className="text-center py-16 rounded-xl border border-dashed border-white/20 bg-white dark:bg-slate-900/5">
-              <Calendar className="w-16 h-16 text-gray-600 dark:text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-400 dark:text-gray-500 text-lg mb-4">No events yet</p>
+            <div className="flex flex-col items-center justify-center py-24 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+              <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                <Calendar className="w-10 h-10 text-slate-400 dark:text-slate-500" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No events created yet</h3>
+              <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm text-center">
+                Get started by creating your first event to start accepting registrations.
+              </p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 dark:shadow-none transition-all flex items-center space-x-2"
               >
-                Create Your First Event
+                <Plus className="w-5 h-5" />
+                <span>Create Your First Event</span>
               </button>
             </div>
           ) : (
@@ -118,25 +130,30 @@ export default function OrganizerDashboard() {
                   key={event._id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="p-6 rounded-xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5 hover:border-blue-400/50 transition-all"
+                  className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/50 transition-all group"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold text-white mb-2">{event.name}</h3>
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 dark:text-gray-500">
-                        <span>{event.registeredCount || 0} / {event.capacity || 100}</span>
-                        <span>•</span>
-                        <span>{new Date(event.date).toLocaleDateString()}</span>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{event.name}</h3>
+                      <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+                          <Users className="w-4 h-4 text-blue-500" />
+                          <span className="text-slate-700 dark:text-slate-300">{event.registeredCount || 0} / {event.capacity || 100} Registered</span>
+                        </div>
+                        <div className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+                          <Calendar className="w-4 h-4 text-cyan-500" />
+                          <span className="text-slate-700 dark:text-slate-300">{new Date(event.date || event.createdAt || Date.now()).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <button className="p-2 rounded-lg hover:bg-white dark:bg-slate-900/10 transition-colors text-blue-400" title="Edit">
+                    <div className="flex items-center space-x-3 border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-800 pt-4 sm:pt-0 sm:pl-6">
+                      <button className="p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-900/30 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors" title="Edit Event">
                         <Edit2 className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleDeleteEvent(event._id)}
-                        className="p-2 rounded-lg hover:bg-white dark:bg-slate-900/10 transition-colors text-red-400"
-                        title="Delete"
+                        className="p-2.5 rounded-xl bg-slate-50 hover:bg-red-50 dark:bg-slate-800 dark:hover:bg-red-900/30 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
+                        title="Delete Event"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>

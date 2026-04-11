@@ -4,6 +4,15 @@ import { Membership } from '../models/Membership.js';
 
 const router = express.Router();
 
+router.get('/', async (req, res) => {
+  try {
+    const orgs = await Organization.find().select('name _id');
+    res.json(orgs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const org = await Organization.findById(req.params.id).select('-passwordHash');
