@@ -1,115 +1,249 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { gsap } from 'gsap';
-import { ArrowLeft, Music, Trophy, Gamepad, Code, Shield, Camera } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Search, Filter, Calendar, MapPin, Users, ChevronDown } from 'lucide-react';
+import EventCard from '../components/EventCard';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { eventsAPI } from '../lib/api';
+import { useUIStore } from '../store/ui';
 
-const Events = () => {
-  const navigate = useNavigate();
+export const demoEvents = [
+  {
+    _id: '1',
+    name: 'Tech Summit 2026',
+    category: 'conferences',
+    description: 'The Premier Technology Conference & Networking Event with industry leaders and keynote speakers.',
+    date: '2026-04-25T09:00:00Z',
+    location: 'New Delhi Convention Center',
+    registeredCount: 2500,
+    capacity: 5000,
+    prizePool: '$50K+',
+    tags: ['Technology', 'Networking', 'Conference'],
+  },
+  {
+    _id: '2',
+    name: 'Business Leadership Summit',
+    category: 'workshops',
+    description: 'Executive Development & Strategy Workshop with Fortune 500 CEOs and one-on-one mentoring.',
+    date: '2026-05-15T10:00:00Z',
+    location: 'Mumbai Business Plaza',
+    registeredCount: 150,
+    capacity: 300,
+    prizePool: '$75K+',
+    tags: ['Leadership', 'Business', 'Professional'],
+  },
+  {
+    _id: '3',
+    name: 'Digital Marketing Masterclass',
+    category: 'webinars',
+    description: 'Master Modern Marketing Strategies including SEO, social media, content marketing, and analytics.',
+    date: '2026-05-05T18:00:00Z',
+    location: 'Online Live Sessions',
+    registeredCount: 850,
+    capacity: 1000,
+    tags: ['Marketing', 'Digital', 'Training'],
+  },
+  {
+    _id: '4',
+    name: 'Startup Founders Mixer',
+    category: 'networking',
+    description: 'Networking event for entrepreneurs, startups, VCs, and angel investors with speed networking.',
+    date: '2026-04-30T18:00:00Z',
+    location: 'Bangalore Tech Hub',
+    registeredCount: 180,
+    capacity: 200,
+    tags: ['Startup', 'Networking', 'Investors'],
+  },
+  {
+    _id: '5',
+    name: 'Financial Services Conference',
+    category: 'conferences',
+    description: 'Industry insights and networking for banking, fintech, and investment sector professionals.',
+    date: '2026-05-20T09:00:00Z',
+    location: 'Mumbai',
+    registeredCount: 1100,
+    capacity: 2000,
+    prizePool: '$100K+',
+    tags: ['Finance', 'Networking', 'Conference'],
+  },
+  {
+    _id: '6',
+    name: 'Project Management Intensive',
+    category: 'workshops',
+    description: 'PMP certification prep and agile transformation strategies with hands-on projects.',
+    date: '2026-05-25T09:00:00Z',
+    location: 'Online',
+    registeredCount: 120,
+    capacity: 150,
+    tags: ['Management', 'Training', 'Professional'],
+  },
+];
+
+export default function Events() {
+  const [events, setEvents] = useState(demoEvents);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [category, setCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('upcoming');
+  const { addNotification } = useUIStore();
+
+  const loadEvents = async () => {
+    try {
+      // Try to fetch from API with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('API timeout')), 2000)
+      );
+      
+      const data = await Promise.race([eventsAPI.getAll(), timeoutPromise]);
+      
+      if (Array.isArray(data) && data.length > 0) {
+        setEvents(data);
+      }
+    } catch (apiError) {
+      console.log('Using demo events (API unavailable or slow)');
+      // Keep demo events if API fails
+    }
+  };
 
   useEffect(() => {
-    // Animate elements on page load
-    gsap.to(".event-card", {
-      opacity: 1,
-      y: 0,
-      duration: 0.8,
-      stagger: 0.1,
-      ease: "power2.out"
-    });
+    loadEvents();
   }, []);
 
-  const events = [
-    {
-      icon: Music,
-      iconColor: 'text-pink-600',
-      bgColor: 'bg-pink-100',
-      title: 'Dance Face-off',
-      description: 'Annual inter-college cultural dance competition[cite: 6].',
-      joined: 42
-    },
-    {
-      icon: Trophy,
-      iconColor: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-      title: 'Campus Sports Meet',
-      description: 'Athletics and team sports tournaments[cite: 5].',
-      joined: 128
-    },
-    {
-      icon: Gamepad,
-      iconColor: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-      title: 'Esports Arena',
-      description: 'Competitive gaming tournament for local clubs[cite: 6].',
-      joined: 256
-    },
-    {
-      icon: Code,
-      iconColor: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-      title: 'HackTheChain 4.0',
-      description: 'The flagship 24-hour innovation marathon[cite: 1].',
-      joined: 890
-    },
-    {
-      icon: Shield,
-      iconColor: 'text-slate-100',
-      bgColor: 'bg-slate-800',
-      title: 'CTF Challenge',
-      description: 'Capture the Flag security competition[cite: 16].',
-      joined: 115
-    },
-    {
-      icon: Camera,
-      iconColor: 'text-emerald-600',
-      bgColor: 'bg-emerald-100',
-      title: 'Lens & Light',
-      description: 'Showcase your best campus moments and shots[cite: 6].',
-      joined: 76
-    }
-  ];
+  const categories = ['all', 'conferences', 'workshops', 'networking', 'webinars', 'training'];
+
+  const filteredAndSortedEvents = events
+    .filter((event) => {
+      const matchesSearch = !searchTerm || 
+        event.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = category === 'all' || event.category === category;
+      
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'upcoming') {
+        return new Date(a.date) - new Date(b.date);
+      }
+      return b.prizes - a.prizes;
+    });
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-['Plus_Jakarta_Sans']">
-      <nav className="w-full bg-white border-b border-slate-200 py-4 px-8 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <button onClick={() => navigate('/')} className="font-bold text-xl text-indigo-600 flex items-center gap-2 hover:text-indigo-700 transition-colors">
-            <ArrowLeft className="text-sm" /> CampusConnect
-          </button>
-          <div className="flex gap-6 text-sm font-semibold text-slate-600">
-            <span className="text-emerald-600 flex items-center gap-1">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div> Service 3002 Active
-            </span>
+    <div className="min-h-full">
+      {/* Header */}
+      <div className="border-b border-white/20 dark:border-slate-700 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+            <h1 className="text-4xl md:text-5xl font-black text-gray-950 dark:text-white mb-4">Discover Events</h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">Find conferences, workshops, networking events, webinars, training, and more</p>
+          </motion.div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Search & Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10"
+        >
+          {/* Search */}
+          <div className="md:col-span-2">
+            <div className="relative">
+              <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-xl border border-white/40 dark:border-slate-700 glass focus:bg-white/90 dark:focus:bg-slate-900/90 text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium"
+              />
+            </div>
           </div>
-        </div>
-      </nav>
 
-      <header className="py-16 px-8 text-center max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900 mb-4">Event Catalog</h1>
-        <p className="text-slate-500 text-lg">Real-time registration tracking powered by our distributed notification service.</p>
-      </header>
+          {/* Category Filter */}
+          <div className="relative group">
+            <div className="flex items-center space-x-2 px-4 py-3 border border-white/40 dark:border-slate-700 rounded-xl glass cursor-pointer hover:border-blue-300 transition-all">
+              <Filter className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              <span className="text-gray-700 dark:text-gray-200 font-semibold capitalize">{category}</span>
+              <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500 ml-auto" />
+            </div>
+            <div className="absolute top-full left-0 mt-2 w-full glass-card rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  className="block w-full text-left px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:bg-slate-800/50 hover:text-blue-600 dark:text-blue-400 font-semibold capitalize transition-all"
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <section className="max-w-7xl mx-auto px-8 pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {events.map((event, index) => {
-            const IconComponent = event.icon;
-            return (
-              <div key={index} className="event-card p-8 rounded-3xl bg-white border border-slate-200 opacity-0 translate-y-4 transition-all duration-300 hover:border-indigo-600 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-100/50">
-                <div className={`icon-box w-14 h-14 ${event.bgColor} ${event.iconColor} rounded-2xl flex items-center justify-center text-2xl mb-6 transition-transform duration-300 hover:scale-110`}>
-                  <IconComponent className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">{event.title}</h3>
-                <p className="text-sm text-slate-500 mb-6">{event.description}</p>
-                <div className="flex items-center justify-between pt-6 border-t border-slate-100">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Status</span>
-                  <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{event.joined} Joined</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+          {/* Sort */}
+          <div className="relative group">
+            <div className="flex items-center space-x-2 px-4 py-3 border border-white/40 dark:border-slate-700 rounded-xl glass cursor-pointer hover:border-blue-300 transition-all">
+              <span className="text-gray-700 dark:text-gray-200 font-semibold">{sortBy === 'upcoming' ? 'Upcoming' : 'Prize'}</span>
+              <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500 ml-auto" />
+            </div>
+            <div className="absolute top-full right-0 mt-2 w-48 glass-card rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+              <button
+                onClick={() => setSortBy('upcoming')}
+                className="block w-full text-left px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:bg-slate-800/50 hover:text-blue-600 dark:text-blue-400 font-semibold transition-all"
+              >
+                Upcoming First
+              </button>
+              <button
+                onClick={() => setSortBy('prize')}
+                className="block w-full text-left px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:bg-slate-800/50 hover:text-blue-600 dark:text-blue-400 font-semibold transition-all"
+              >
+                Highest Prize
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Results Count */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8 flex items-center justify-between">
+          <p className="text-gray-600 dark:text-gray-300 font-semibold">
+            {filteredAndSortedEvents.length} {filteredAndSortedEvents.length === 1 ? 'event' : 'events'} found
+          </p>
+        </motion.div>
+
+        {/* Events Grid */}
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : filteredAndSortedEvents.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-20"
+          >
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">No events found</h3>
+            <p className="text-gray-600 dark:text-gray-300 font-medium">Try adjusting your search or filters</p>
+          </motion.div>
+        ) : (
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.1 },
+              },
+            }}
+            initial="hidden"
+            animate="show"
+          >
+            {filteredAndSortedEvents.map((event, index) => (
+              <EventCard key={event._id} event={event} index={index} />
+            ))}
+          </motion.div>
+        )}
+      </div>
     </div>
   );
-};
-
-export default Events;
+}
